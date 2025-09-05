@@ -75,7 +75,8 @@ and handle_ident input pos =
         | Some ident -> ident :: scan input last_pos
         | None -> Identifier ident_str :: scan input last_pos
 
-let print_tokens (tokens : token list)= 
+let print_tokens (tokens : token list) = 
+    print_endline("===== Tokens =====");
     let rec print_token_rec = function 
     | [] -> ()
     | token :: list -> 

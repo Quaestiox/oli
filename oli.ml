@@ -1,4 +1,6 @@
 open Lexer
+open Ast
+open Parser
 open Util
 
 let usage = "Usage: oli [option] {file}\n"
@@ -21,5 +23,12 @@ let () =
     (* lexer scan *)
     let tokens = scan content 0 in
 
-    print_tokens tokens
+    print_tokens tokens;
+
+    (* grammatical analysis *)
+    let parser_state = create_parser tokens in  
+    let ast = parse parser_state in
+    print_ast ast
+
+    
 
