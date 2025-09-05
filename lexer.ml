@@ -1,6 +1,7 @@
 type token = Identifier of string 
             | Integer of int
-            | Equal | Semicolon | Add | Sub | Asterisk | Slash |END 
+            | Equal | Semicolon | Add | Sub | Asterisk | Slash | END 
+            | LParen | RParen | LBrace | RBrace 
             (* All the keywords here are represented in uppercase *)
             | RETURN | IF | ELSE | WHILE | INT 
 
@@ -15,48 +16,88 @@ let keywords = [
 ]
 
 
-let scan (input : string) (pos : int) : token list =
-    if pos >= String.length input then END
+let rec scan (input : string) (pos : int) : token list =
+    if pos >= String.length input then [END]
     else 
         match input.[pos] with 
         | ' ' | '\t' | '\n' | '\r' -> scan input (pos + 1)
         | c when '0' <= c && c <= '9' -> handle_number input pos
-        | c when 'a' <= c && c <= 'z' || 'A' <= c && 'Z' <= c || c = '_' -> handle_ident input pos
+        | c when 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c = '_' -> handle_ident input pos
         | '=' -> Equal :: scan input (pos + 1)
         | ';' -> Semicolon :: scan input (pos + 1)
         | '+' -> Add :: scan input (pos + 1)
         | '-' -> Sub :: scan input (pos + 1)
-        | '*' -> Asterick :: scan input (pos + 1)
-        | '/' -> Slash :: input (pos + 1)
-        | c -> raise (LexerError ("Unexpected character: " ^ String.of_char c))
+        | '*' -> Asterisk :: scan input (pos + 1)
+        | '/' -> Slash :: scan input (pos + 1)
+        | '(' -> LParen :: scan input (pos + 1)
+        | ')' -> RParen :: scan input (pos + 1)
+        | '{' -> LBrace :: scan input (pos + 1)
+        | '}' -> RBrace :: scan input (pos + 1)
+        | c -> raise (LexerError ("Unexpected character: " ^ String.make 1 c))
     
 and handle_number input pos = 
-    (* get the last position of the input number *)
-    let rec num_forward pos = 
-        if pos < String.length input && '0' <= input.[pos] && input.[pos] <= '9'
-        then handle_number input (pos + 1)
-        else pos
+    let rec num_forward current_pos = 
+        if current_pos >= String.length input then current_pos
+        else if '0' <= input.[current_pos] && input.[current_pos] <= '9'
+        then num_forward (current_pos + 1)
+        else current_pos 
     in 
     let last_pos = num_forward pos in
-    let num_str = String.sub input (last_pos - pos) in
-    Integer (int_of_string num_str) :: scan input end_pos
+    let num_str = String.sub input pos (last_pos - pos) in
+    try
+        Integer (int_of_string num_str) :: scan input last_pos
+    with Failure _ ->
+        raise (LexerError ("Invalid number: " ^ num_str))
 
 and handle_ident input pos = 
     (* get the last position of the input identifier *)
-    let rec ident_forward pos = 
-        if pos < String.length input then
-            match input.[pos] with 
-            | 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' -> ident_forward input (pos + 1)
-            | _ -> pos
-        else pos
+    let rec ident_forward current_pos = 
+        if current_pos >= String.length input then current_pos
+        else
+            match input.[current_pos] with 
+            | 'a'..'z' | 'A'..'Z' | '0'..'9' | '_' -> ident_forward (current_pos + 1)
+            | _ -> current_pos
     in 
     let last_pos = ident_forward pos in
-    let ident_str = String.sub input (last_pos - pos) in 
-    try List.assoc ident keywords :: scan input last_pos
-    with Not_Found Identifier :: scan input last_pos
+    if last_pos = pos then
+        raise (LexerError ("Invalid identifier starting at " ^ String.make 1 input.[pos]))
+    else
+        let ident_str = String.sub input pos (last_pos - pos) in
+        match List.assoc_opt ident_str keywords with 
+        | Some ident -> ident :: scan input last_pos
+        | None -> Identifier ident_str :: scan input last_pos
+
+let print_tokens (tokens : token list)= 
+    let rec print_token_rec = function 
+    | [] -> ()
+    | token :: list -> 
+        let token_str = match token with 
+            | Identifier ident -> "<Identifier, " ^ ident ^ ">"
+            | Integer i -> "<Integer, " ^ string_of_int i ^ ">"
+            | Equal -> "<Equal>"
+            | Semicolon -> "<Semicolon>"
+            | Add -> "<Add>"
+            | Sub -> "<Sub>"
+            | Asterisk -> "<Asterisk>"
+            | Slash -> "<Slash>"
+            | LParen -> "<LParen>"
+            | RParen -> "<RParen>"
+            | LBrace -> "<LBrace>"
+            | RBrace -> "<RBrace>"
+            | RETURN -> "<RETURN>"
+            | IF -> "<IF>"
+            | ELSE -> "<ELSE>"
+            | WHILE -> "<WHILE>"
+            | INT -> "<INT>"
+            | END -> "<END>"
+        in 
+        print_endline token_str;
+        print_token_rec list
+    in 
+    print_token_rec tokens
 
 
-            
+           
 
     
-    
+
