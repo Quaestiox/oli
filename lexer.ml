@@ -1,7 +1,7 @@
 type token = Identifier of string 
             | Integer of int
             | Equal | Semicolon | Add | Sub | Asterisk | Slash | END 
-            | LParen | RParen | LBrace | RBrace 
+            | LParen | RParen | LBrace | RBrace | Comma | Eq | Ne | Lt | Gt | Le | Ge | Not
             (* All the keywords here are represented in uppercase *)
             | RETURN | IF | ELSE | WHILE | INT 
 
@@ -23,7 +23,14 @@ let rec scan (input : string) (pos : int) : token list =
         | ' ' | '\t' | '\n' | '\r' -> scan input (pos + 1)
         | c when '0' <= c && c <= '9' -> handle_number input pos
         | c when 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c = '_' -> handle_ident input pos
+        | '=' when pos + 1 < String.length input && input.[pos + 1] = '=' -> Eq :: scan input (pos + 2)
         | '=' -> Equal :: scan input (pos + 1)
+        | '!' when pos + 1 < String.length input && input.[pos + 1] = '=' -> Ne :: scan input (pos + 2)
+        | '<' when pos + 1 < String.length input && input.[pos + 1] = '=' -> Le :: scan input (pos + 2)
+        | '>' when pos + 1 < String.length input && input.[pos + 1] = '=' -> Ge :: scan input (pos + 2)
+        | '<' -> Lt :: scan input (pos + 1)
+        | '>' -> Gt :: scan input (pos + 1)
+        | '!' -> Not :: scan input (pos + 1)
         | ';' -> Semicolon :: scan input (pos + 1)
         | '+' -> Add :: scan input (pos + 1)
         | '-' -> Sub :: scan input (pos + 1)
@@ -33,6 +40,7 @@ let rec scan (input : string) (pos : int) : token list =
         | ')' -> RParen :: scan input (pos + 1)
         | '{' -> LBrace :: scan input (pos + 1)
         | '}' -> RBrace :: scan input (pos + 1)
+        | ',' -> Comma :: scan input (pos + 1)
         | c -> raise (LexerError ("Unexpected character: " ^ String.make 1 c))
     
 and handle_number input pos = 
@@ -84,12 +92,22 @@ let print_tokens (tokens : token list)=
             | RParen -> "<RParen>"
             | LBrace -> "<LBrace>"
             | RBrace -> "<RBrace>"
+            | Comma -> "<Comma>"
+            | Eq -> "<Eq>"
+            | Ne -> "<Ne>" 
+            | Lt -> "<Lt>"
+            | Le -> "<Le>"
+            | Gt -> "<Gt>"
+            | Ge -> "<Ge>"
+            | Not -> "<Not>"
             | RETURN -> "<RETURN>"
             | IF -> "<IF>"
             | ELSE -> "<ELSE>"
             | WHILE -> "<WHILE>"
             | INT -> "<INT>"
             | END -> "<END>"
+            | c -> raise (LexerError ("Unexpected token"))
+
         in 
         print_endline token_str;
         print_token_rec list
