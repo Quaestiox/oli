@@ -16,5 +16,8 @@ let read_file filename =
   | Invalid_argument _ ->
       Printf.eprintf "Invalid argument (likely negative length) for file: %s\n" filename;
       exit 1
-
-
+(* todo: add error handle *)
+let write_file filename content =
+  let oc = open_out filename in
+  output_string oc content;
+  close_out oc

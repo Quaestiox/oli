@@ -1,6 +1,6 @@
 OCAMLOPT = ocamlopt
 OCAMLC = ocamlc
-SOURCES = util.ml ast.ml lexer.ml parser.ml oli.ml
+SOURCES = util.ml ast.ml lexer.ml parser.ml codegen.ml oli.ml 
 OBJS = $(SOURCES:.ml=.cmx)
 
 oli: $(OBJS)

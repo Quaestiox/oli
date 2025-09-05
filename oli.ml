@@ -1,6 +1,7 @@
 open Lexer
 open Ast
 open Parser
+open Codegen
 open Util
 
 let usage = "Usage: oli [option] {file}\n"
@@ -16,6 +17,7 @@ let print_usage () =
 let () = 
     print_endline "Compiling...";
     let source = "try.c" in
+    let output = "try" in
   
     (* read the source file *)
     let content = read_file source in
@@ -28,7 +30,16 @@ let () =
     (* grammatical analysis *)
     let parser_state = create_parser tokens in  
     let ast = parse parser_state in
-    print_ast ast
+    print_ast ast;
+
+    (* generate assembly code *)
+    let asm_code = gen_program ast in
+    write_file (output ^ ".s") asm_code;
+    Printf.printf "Generated assembly code\n";
+
+    let _ = Sys.command ("as -o " ^ output ^ ".o " ^ output ^ ".s") in
+    let _ = Sys.command ("ld -o " ^ output ^ " " ^ output ^ ".o") in
+    print_endline "done.\n"
 
     
 
